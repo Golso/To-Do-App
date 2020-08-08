@@ -32,10 +32,15 @@ function buildList(){
         let list = data
         for (let i in list){
 
+            let title = `<span class="title">${list[i].title}</span>`
+            if (list[i].completed == true){
+                title = `<strike class="title">${list[i].title}</strike>`
+            }
+
             let item = `
                 <div id="data-row-${i}" class="task-wrapper flex-wrapper">
                     <div style="flex:7">
-                        <span class="title">${list[i].title}</span>
+                        ${title}
                     </div>
                     <div style="flex:1">
                         <button class="btn btn-sm btn-outline-info edit">Edit</button>
@@ -51,6 +56,7 @@ function buildList(){
         for (let i in list){
             let editBtn = document.getElementsByClassName('edit')[i]
             let deleteBtn = document.getElementsByClassName('delete')[i]
+            let title = document.getElementsByClassName('title')[i]
 
             editBtn.addEventListener('click', (function(item){
                 return function(){
@@ -61,6 +67,12 @@ function buildList(){
             deleteBtn.addEventListener('click', (function(item){
                 return function(){
                     deleteItem(item)
+                }
+            })(list[i]))
+
+            title.addEventListener('click', (function(item){
+                return function(){
+                    strikeUnstrike(item)
                 }
             })(list[i]))
         }
@@ -105,6 +117,22 @@ function deleteItem(item){
             'Content-type':'application/json',
             'X-CSRFToken': csrftoken,
         }
+    }).then((response) => {
+        buildList()
+    })
+}
+
+function strikeUnstrike(item){
+    console.log('strike clicked')
+
+    item.completed = !item.completed
+    fetch(`http://127.0.0.1:8000/api/task-update/${item.id}/`, {
+        method:'POST',
+        headers:{
+            'Content-type':'application/json',
+            'X-CSRFToken': csrftoken,
+        },
+        body:JSON.stringify({'title':item.title, 'completed':item.completed})
     }).then((response) => {
         buildList()
     })
