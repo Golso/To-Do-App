@@ -50,10 +50,17 @@ function buildList(){
 
         for (let i in list){
             let editBtn = document.getElementsByClassName('edit')[i]
+            let deleteBtn = document.getElementsByClassName('delete')[i]
 
             editBtn.addEventListener('click', (function(item){
                 return function(){
                     editItem(item)
+                }
+            })(list[i]))
+
+            deleteBtn.addEventListener('click', (function(item){
+                return function(){
+                    deleteItem(item)
                 }
             })(list[i]))
         }
@@ -88,4 +95,17 @@ function editItem(item){
     console.log('Item clicked:', item)
     activeItem = item
     document.getElementById('title').value = activeItem.title
+}
+
+function deleteItem(item){
+    console.log('Delete clicked')
+    fetch(`http://127.0.0.1:8000/api/task-delete/${item.id}/`, {
+        method:'DELETE',
+        headers:{
+            'Content-type':'application/json',
+            'X-CSRFToken': csrftoken,
+        }
+    }).then((response) => {
+        buildList()
+    })
 }
