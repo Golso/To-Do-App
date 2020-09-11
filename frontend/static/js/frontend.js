@@ -16,28 +16,35 @@ function getCookie(name) {
 
 const csrftoken = getCookie('csrftoken');
 
-let activeItem = null
+let activeItem = null;
+let list_snapshot = [];
 
-buildList()
+buildList();
 
 function buildList(){
-    let wrapper = document.getElementById('list-wrapper')
-    wrapper.innerHTML = ''
-    let url = 'http://127.0.0.1:8000/api/task-list/'
+    let wrapper = document.getElementById('list-wrapper');
+    //wrapper.innerHTML = ''
+
+    const url = 'http://127.0.0.1:8000/api/task-list/';
     fetch(url)
     .then((resp) => resp.json())
     .then(function(data){
-        console.log('Data:', data)
+        console.log('Data:', data);
 
-        let list = data
+        const list = data;
         for (let i in list){
+
+            try{
+                document.getElementById(`data-row-${i}`).remove();
+            }catch(err){
+            }
 
             let title = `<span class="title">${list[i].title}</span>`
             if (list[i].completed == true){
                 title = `<strike class="title">${list[i].title}</strike>`
             }
 
-            let item = `
+            const item = `
                 <div id="data-row-${i}" class="task-wrapper flex-wrapper">
                     <div style="flex:7">
                         ${title}
@@ -49,46 +56,54 @@ function buildList(){
                         <button class="btn btn-sm btn-outline-dark delete">-</button>
                     </div>
                 </div>
-            `
-            wrapper.innerHTML += item
+            `;
+            wrapper.innerHTML += item;
         }
 
+        if (list_snapshot.length > list.length){
+            for(let i = list.length; i < list_snapshot.length; i++){
+                document.getElementById(`data-row-${i}`).remove();
+            }
+        }
+
+        list_snapshot = list;
+
         for (let i in list){
-            let editBtn = document.getElementsByClassName('edit')[i]
-            let deleteBtn = document.getElementsByClassName('delete')[i]
-            let title = document.getElementsByClassName('title')[i]
+            const editBtn = document.getElementsByClassName('edit')[i];
+            const deleteBtn = document.getElementsByClassName('delete')[i];
+            const title = document.getElementsByClassName('title')[i];
 
             editBtn.addEventListener('click', (function(item){
                 return function(){
-                    editItem(item)
+                    editItem(item);
                 }
-            })(list[i]))
+            })(list[i]));
 
             deleteBtn.addEventListener('click', (function(item){
                 return function(){
-                    deleteItem(item)
+                    deleteItem(item);
                 }
-            })(list[i]))
+            })(list[i]));
 
             title.addEventListener('click', (function(item){
                 return function(){
-                    strikeUnstrike(item)
+                    strikeUnstrike(item);
                 }
-            })(list[i]))
+            })(list[i]));
         }
     })
 }
 
-let form = document.getElementById('form-wrapper')
+const form = document.getElementById('form-wrapper');
 form.addEventListener('submit', function(e){
-    e.preventDefault()
-    console.log('Form submitted')
-    let url = 'http://127.0.0.1:8000/api/task-create/'
+    e.preventDefault();
+    console.log('Form submitted');
+    let url = 'http://127.0.0.1:8000/api/task-create/';
     if (activeItem != null){
-        url = `http://127.0.0.1:8000/api/task-update/${activeItem.id}/`
-        activeItem = null
+        url = `http://127.0.0.1:8000/api/task-update/${activeItem.id}/`;
+        activeItem = null;
     }
-    let title = document.getElementById('title').value
+    const title = document.getElementById('title').value;
     fetch(url, {
         method:'POST',
         headers:{
@@ -98,19 +113,19 @@ form.addEventListener('submit', function(e){
         body:JSON.stringify({'title': title})
     }
     ).then(function(response){
-        buildList()
-        document.getElementById('form').reset()
+        buildList();
+        document.getElementById('form').reset();
     })
-})
+});
 
 function editItem(item){
-    console.log('Item clicked:', item)
-    activeItem = item
-    document.getElementById('title').value = activeItem.title
+    console.log('Item clicked:', item);
+    activeItem = item;
+    document.getElementById('title').value = activeItem.title;
 }
 
 function deleteItem(item){
-    console.log('Delete clicked')
+    console.log('Delete clicked');
     fetch(`http://127.0.0.1:8000/api/task-delete/${item.id}/`, {
         method:'DELETE',
         headers:{
@@ -118,14 +133,14 @@ function deleteItem(item){
             'X-CSRFToken': csrftoken,
         }
     }).then((response) => {
-        buildList()
+        buildList();
     })
 }
 
 function strikeUnstrike(item){
-    console.log('strike clicked')
+    console.log('strike clicked');
 
-    item.completed = !item.completed
+    item.completed = !item.completed;
     fetch(`http://127.0.0.1:8000/api/task-update/${item.id}/`, {
         method:'POST',
         headers:{
@@ -134,6 +149,6 @@ function strikeUnstrike(item){
         },
         body:JSON.stringify({'title':item.title, 'completed':item.completed})
     }).then((response) => {
-        buildList()
+        buildList();
     })
 }
