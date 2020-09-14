@@ -18,12 +18,12 @@ const csrftoken = getCookie('csrftoken');
 
 let activeItem = null;
 let list_snapshot = [];
+let activeNotes = false;
 
 buildList();
 
 function buildList(){
     let wrapper = document.getElementById('list-wrapper');
-    //wrapper.innerHTML = ''
 
     const url = 'http://127.0.0.1:8000/api/task-list/';
     fetch(url)
@@ -43,20 +43,47 @@ function buildList(){
             if (list[i].completed == true){
                 title = `<strike class="title">${list[i].title}</strike>`
             }
-
-            const item = `
-                <div id="data-row-${i}" class="task-wrapper flex-wrapper">
-                    <div style="flex:7">
-                        ${title}
+            let item ='';
+            if(activeNotes==true){
+                item = `
+                <div id="data-row-${i}" >
+                    <div class="task-wrapper flex-wrapper">
+                        <div style="flex:6">
+                            ${title}
+                        </div>
+                        <div style="flex:1">
+                            <button class="btn btn-sm btn-outline-info edit">Edit</button>
+                        </div>
+                        <div style="flex:1">
+                            <button class="btn btn-sm btn-outline-warning notes">Notes</button>
+                        </div>
+                        <div style="flex:0">
+                            <button class="btn btn-sm btn-outline-dark delete">-</button>
+                        </div>
                     </div>
-                    <div style="flex:1">
-                        <button class="btn btn-sm btn-outline-info edit">Edit</button>
-                    </div>
-                    <div style="flex:1">
-                        <button class="btn btn-sm btn-outline-dark delete">-</button>
+                    <textarea id="notes" rows="10" cols="120" style="max-width:100%;">${list[i].notes}</textarea>
+                </div>
+            `;
+            } else{
+                item = `
+                <div id="data-row-${i}" >
+                    <div class="task-wrapper flex-wrapper">
+                        <div style="flex:6">
+                            ${title}
+                        </div>
+                        <div style="flex:1">
+                            <button class="btn btn-sm btn-outline-info edit">Edit</button>
+                        </div>
+                        <div style="flex:1">
+                            <button class="btn btn-sm btn-outline-warning notes">Notes</button>
+                        </div>
+                        <div style="flex:0">
+                            <button class="btn btn-sm btn-outline-dark delete">-</button>
+                        </div>
                     </div>
                 </div>
             `;
+            }
             wrapper.innerHTML += item;
         }
 
@@ -70,12 +97,19 @@ function buildList(){
 
         for (let i in list){
             const editBtn = document.getElementsByClassName('edit')[i];
+            const noteBtn = document.getElementsByClassName('notes')[i];
             const deleteBtn = document.getElementsByClassName('delete')[i];
             const title = document.getElementsByClassName('title')[i];
 
             editBtn.addEventListener('click', (function(item){
                 return function(){
                     editItem(item);
+                }
+            })(list[i]));
+
+            noteBtn.addEventListener('click', (function(item){
+                return function(){
+                    showNotes(item);
                 }
             })(list[i]));
 
@@ -122,6 +156,29 @@ function editItem(item){
     console.log('Item clicked:', item);
     activeItem = item;
     document.getElementById('title').value = activeItem.title;
+}
+
+function showNotes(item){
+    console.log(activeNotes)
+    if(activeNotes){
+        console.log('Item clicked:', item);
+        const note = document.getElementById('notes').value;
+        console.log(note)
+        fetch(`http://127.0.0.1:8000/api/task-update/${item.id}/`, {
+            method:'POST',
+            headers:{
+                'Content-type':'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+            body:JSON.stringify({'title':item.title, 'notes': note})
+        }
+        ).then(function(response){
+            buildList();
+        })
+    }else{
+        buildList();
+    }
+    activeNotes = !activeNotes;
 }
 
 function deleteItem(item){
