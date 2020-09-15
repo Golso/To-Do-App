@@ -19,6 +19,7 @@ const csrftoken = getCookie('csrftoken');
 let activeItem = null;
 let list_snapshot = [];
 let activeNotes = false;
+let activeNotesItem = null;
 
 buildList();
 
@@ -29,7 +30,7 @@ function buildList(){
     fetch(url)
     .then((resp) => resp.json())
     .then(function(data){
-        console.log('Data:', data);
+//        console.log('Data:', data);
 
         const list = data;
         for (let i in list){
@@ -43,9 +44,7 @@ function buildList(){
             if (list[i].completed == true){
                 title = `<strike class="title">${list[i].title}</strike>`
             }
-            let item ='';
-            if(activeNotes==true){
-                item = `
+            let item =`
                 <div id="data-row-${i}" >
                     <div class="task-wrapper flex-wrapper">
                         <div style="flex:6">
@@ -55,34 +54,22 @@ function buildList(){
                             <button class="btn btn-sm btn-outline-info edit">Edit</button>
                         </div>
                         <div style="flex:1">
-                            <button class="btn btn-sm btn-outline-warning notes">Notes</button>
+                            <button id="button${list[i].id}" class="btn btn-sm btn-outline-warning notes">Notes</button>
                         </div>
                         <div style="flex:0">
                             <button class="btn btn-sm btn-outline-dark delete">-</button>
                         </div>
                     </div>
-                    <textarea id="notes" rows="10" cols="120" style="max-width:100%;">${list[i].notes}</textarea>
+                `;
+            if(activeNotes==true && activeNotesItem.id === list[i].id){
+                item += `
+                    <textarea id="notes${list[i].id}" rows="10" cols="120" style="max-width:100%;">${list[i].notes}</textarea>
                 </div>
             `;
             } else{
-                item = `
-                <div id="data-row-${i}" >
-                    <div class="task-wrapper flex-wrapper">
-                        <div style="flex:6">
-                            ${title}
-                        </div>
-                        <div style="flex:1">
-                            <button class="btn btn-sm btn-outline-info edit">Edit</button>
-                        </div>
-                        <div style="flex:1">
-                            <button class="btn btn-sm btn-outline-warning notes">Notes</button>
-                        </div>
-                        <div style="flex:0">
-                            <button class="btn btn-sm btn-outline-dark delete">-</button>
-                        </div>
-                    </div>
+                item += `
                 </div>
-            `;
+                `
             }
             wrapper.innerHTML += item;
         }
@@ -153,17 +140,14 @@ form.addEventListener('submit', function(e){
 });
 
 function editItem(item){
-    console.log('Item clicked:', item);
     activeItem = item;
     document.getElementById('title').value = activeItem.title;
 }
 
 function showNotes(item){
-    console.log(activeNotes)
+    activeNotesItem = item;
     if(activeNotes){
-        console.log('Item clicked:', item);
-        const note = document.getElementById('notes').value;
-        console.log(note)
+        const note = document.getElementById(`notes${item.id}`).value;
         fetch(`http://127.0.0.1:8000/api/task-update/${item.id}/`, {
             method:'POST',
             headers:{
