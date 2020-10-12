@@ -41,7 +41,7 @@ function buildList(){
             }
 
             let title = `<span class="title">${list[i].title}</span>`
-            if (list[i].completed == true){
+            if (list[i].completed === true){
                 title = `<strike class="title">${list[i].title}</strike>`
             }
             let item =`
@@ -61,7 +61,7 @@ function buildList(){
                         </div>
                     </div>
                 `;
-            if(activeNotes==true && activeNotesItem.id === list[i].id){
+            if(activeNotes === true && activeNotesItem.id === list[i].id){
                 item += `
                     <textarea id="notes${list[i].id}" rows="10" cols="120" style="max-width:100%;">${list[i].notes}</textarea>
                 </div>
@@ -147,18 +147,22 @@ function editItem(item){
 function showNotes(item){
     activeNotesItem = item;
     if(activeNotes){
-        const note = document.getElementById(`notes${item.id}`).value;
-        fetch(`http://127.0.0.1:8000/api/task-update/${item.id}/`, {
-            method:'POST',
-            headers:{
-                'Content-type':'application/json',
-                'X-CSRFToken': csrftoken,
-            },
-            body:JSON.stringify({'title':item.title, 'notes': note})
+        try {
+            const note = document.getElementById(`notes${item.id}`).value;
+            fetch(`http://127.0.0.1:8000/api/task-update/${item.id}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                    },
+                    body: JSON.stringify({'title': item.title, 'notes': note})
+                }
+            ).then(function (response) {
+                buildList();
+            })
         }
-        ).then(function(response){
-            buildList();
-        })
+        catch(e){
+        }
     }else{
         buildList();
     }
@@ -166,6 +170,8 @@ function showNotes(item){
 }
 
 function deleteItem(item){
+    document.getElementById('title').value = "";
+    activeItem = null;
     console.log('Delete clicked');
     fetch(`http://127.0.0.1:8000/api/task-delete/${item.id}/`, {
         method:'DELETE',
@@ -180,7 +186,6 @@ function deleteItem(item){
 
 function strikeUnstrike(item){
     console.log('strike clicked');
-
     item.completed = !item.completed;
     fetch(`http://127.0.0.1:8000/api/task-update/${item.id}/`, {
         method:'POST',
